@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Virtual Biotechnology Research Complex</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #040c14;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Top-Left HUD Room and Info Card */
+        #hud-container {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            z-index: 20;
+            max-width: 380px;
+        }
+
+        #room-badge {
+            background: rgba(8, 28, 40, 0.92);
+            border: 1.5px solid #55e5dc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #55e5dc;
+            font-weight: bold;
+            font-size: 13.5px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+        }
+
+        /* Fast-Travel Quick Teleport Bar */
+        #fast-travel-bar {
+            display: flex;
+            gap: 6px;
+            pointer-events: auto;
+            flex-wrap: wrap;
+        }
+
+        .travel-btn {
+            background: rgba(14, 38, 54, 0.88);
+            border: 1px solid rgba(85, 229, 220, 0.4);
+            color: #d8f5fc;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .travel-btn:hover {
+            background: #55e5dc;
+            color: #040c14;
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(85, 229, 220, 0.6);
+        }
+
+        #info-panel {
+            background: rgba(10, 30, 44, 0.92);
+            border: 1px solid rgba(85, 229, 220, 0.35);
+            border-radius: 14px;
+            padding: 16px 18px;
+            color: #eaf6fa;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            pointer-events: auto;
+        }
+
+        #info-panel h2 {
+            margin: 0 0 6px 0;
+            font-size: 19px;
+            color: #55e5dc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #details-card {
+            background: rgba(4, 15, 22, 0.75);
+            border-left: 3px solid #55e5dc;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.45;
+            color: #d1ecf4;
+            min-height: 48px;
+        }
+
+        #hint-text {
+            color: #92b7c6;
+            font-size: 11.5px;
+            line-height: 1.4;
+        }
+
+        /* Top-Right Interactive Mini-Map HUD */
+        #minimap-card {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(8, 24, 36, 0.9);
+            border: 1.5px solid rgba(85, 229, 220, 0.4);
+            border-radius: 14px;
+            padding: 10px 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #minimap-title {
+            color: #55e5dc;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        #minimap-canvas {
+            background: #02080e;
+            border-radius: 8px;
+            border: 1px solid rgba(85, 229, 220, 0.2);
+            display: block;
+        }
+
+        /* Center Aiming Reticle (+) */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 15;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(85, 229, 220, 0.95);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.9);
+            border-radius: 1px;
+        }
+
+        #crosshair::before {
+            top: 9px;
+            left: 0;
+            width: 20px;
+            height: 2px;
+        }
+
+        #crosshair::after {
+            top: 0;
+            left: 9px;
+            width: 2px;
+            height: 20px;
+        }
+
+        #crosshair.highlight {
+            transform: translate(-50%, -50%) scale(1.35);
+            filter: drop-shadow(0 0 6px #55e5dc);
+        }
+
+        /* Test Tube Held Banner */
+        #tube-action-bar {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(14, 38, 54, 0.95);
+            border: 2px solid #55e5dc;
+            color: #eaf6fa;
+            padding: 10px 22px;
+            border-radius: 30px;
+            font-size: 13.5px;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            gap: 14px;
+            z-index: 30;
+            animation: pulseBanner 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseBanner {
+            0% { box-shadow: 0 0 10px rgba(85, 229, 220, 0.3); }
+            50% { box-shadow: 0 0 24px rgba(85, 229, 220, 0.7); }
+            100% { box-shadow: 0 0 10px rgba(85, 229, 220, 0.3); }
+        }
+
+        .action-chip {
+            background: rgba(85, 229, 220, 0.2);
+            color: #55e5dc;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Bottom mouse instructions */
+        #mouse-prompt {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #9cd5e3;
+            background: rgba(8, 24, 34, 0.85);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            border: 1px solid rgba(85, 229, 220, 0.3);
+            pointer-events: none;
+            z-index: 15;
+            transition: opacity 0.3s;
+        }
+
+        /* On-Screen Directional Controls */
+        #onscreen-controls {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 25;
+        }
+
+        .dpad-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ctrl-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(12, 34, 48, 0.88);
+            border: 2px solid rgba(85, 229, 220, 0.5);
+            color: #55e5dc;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .ctrl-btn:hover {
+            background: rgba(24, 60, 84, 0.95);
+            border-color: #55e5dc;
+            box-shadow: 0 0 12px rgba(85, 229, 220, 0.4);
+        }
+
+        .ctrl-btn:active,
+        .ctrl-btn.active {
+            background: #55e5dc;
+            color: #040c14;
+            transform: scale(0.94);
+        }
+
+        .action-btn-extra {
+            font-size: 11px;
+            width: 60px;
+            letter-spacing: 0.5px;
+        }
+
+        #audio-toggle {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            background: rgba(10, 30, 44, 0.85);
+            border: 1px solid rgba(85, 229, 220, 0.4);
+            color: #55e5dc;
+            padding: 8px 14px;
+            border-radius: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 25;
+        }
+        #audio-toggle:hover {
+            background: rgba(20, 54, 76, 0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top-Left HUD & Fast Travel -->
+    <div id="hud-container">
+        <div id="room-badge">
+            <span>📍</span> <span id="current-room-text">Central Research Atrium</span>
+        </div>
+
+        <!-- 1-Click Fast Travel to Explore All Rooms -->
+        <div id="fast-travel-bar">
+            <button class="travel-btn" onclick="teleportTo('atrium')">🏛️ Main Atrium</button>
+            <button class="travel-btn" onclick="teleportTo('genetics')">🧬 Genetics Wing</button>
+            <button class="travel-btn" onclick="teleportTo('microbio')">🧫 Microbiology</button>
+            <button class="travel-btn" onclick="teleportTo('equip')">⚙️ Equipment</button>
+        </div>
+
+        <div id="info-panel">
+            <h2>🧬 BioTech Research Complex</h2>
+            <div id="details-card">
+                <b>4 Connected Facilities Ready to Explore!</b><br>
+                Walk through the open archways or use the quick buttons above to explore the <b>Genetics Wing</b>, <b>Microbiology Cleanroom</b>, and <b>Equipment Suite</b>.
+            </div>
+            <div id="hint-text">
+                • <b>WASD / Arrows</b>: Walk &nbsp;|&nbsp; <b>Mouse Look</b>: Click screen<br>
+                • <b>Left Click</b>: Inspect equipment &amp; pick up/place test tubes<br>
+                • <b>R key</b>: Rotate held test tube &nbsp;|&nbsp; <b>Q key</b>: Return tube
+            </div>
+        </div>
+    </div>
+
+    <!-- Top-Right Live Facility Radar / Mini-Map -->
+    <div id="minimap-card">
+        <div id="minimap-title">Facility Radar</div>
+        <canvas id="minimap-canvas" width="160" height="160"></canvas>
+    </div>
+
+    <!-- Center Reticle -->
+    <div id="crosshair"></div>
+
+    <!-- Test Tube Handling Banner -->
+    <div id="tube-action-bar">
+        <span>🧪 Holding: <b id="held-tube-name" style="color:#55e5dc;">Sample Tube</b></span>
+        <span class="action-chip">[CLICK] Place on Bench</span>
+        <span class="action-chip">[R] Rotate</span>
+        <span class="action-chip">[Q] Return to Rack</span>
+    </div>
+
+    <!-- Status & Mouse-look Instructions -->
+    <div id="mouse-prompt">Click screen to lock mouse-look • Walk through open doors or use buttons • ESC to unlock</div>
+
+    <!-- Audio Toggle -->
+    <button id="audio-toggle">🔊 Audio: ON</button>
+
+    <!-- On-screen directional & action controls -->
+    <div id="onscreen-controls">
+        <div class="dpad-row">
+            <button id="btn-w" class="ctrl-btn" title="Walk Forward">W</button>
+        </div>
+        <div class="dpad-row">
+            <button id="btn-a" class="ctrl-btn" title="Strafe Left">A</button>
+            <button id="btn-s" class="ctrl-btn" title="Walk Backward">S</button>
+            <button id="btn-d" class="ctrl-btn" title="Strafe Right">D</button>
+        </div>
+        <div class="dpad-row" style="margin-top: 4px;">
+            <button id="btn-rotate" class="ctrl-btn action-btn-extra" title="Rotate Held Tube">ROT [R]</button>
+            <button id="btn-action" class="ctrl-btn action-btn-extra" title="Place / Return Tube">ACT [Q]</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+        // ==========================================
+        //  SYNTHESIZED SOUND EFFECTS (Web Audio)
+        // ==========================================
+        let audioCtx = null;
+        let audioEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'pickup') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, t);
+                osc.frequency.exponentialRampToValueAtTime(1320, t + 0.12);
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                osc.start(t); osc.stop(t + 0.35);
+            } else if (type === 'place') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, t);
+                osc.frequency.exponentialRampToValueAtTime(220, t + 0.15);
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                osc.start(t); osc.stop(t + 0.25);
+            } else if (type === 'inspect') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(660, t);
+                osc.frequency.setValueAtTime(880, t + 0.08);
+                gain.gain.setValueAtTime(0.12, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                osc.start(t); osc.stop(t + 0.25);
+            } else if (type === 'teleport') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, t);
+                osc.frequency.exponentialRampToValueAtTime(1200, t + 0.25);
+                gain.gain.setValueAtTime(0.18, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                osc.start(t); osc.stop(t + 0.4);
+            } else if (type === 'step') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(110, t);
+                osc.frequency.exponentialRampToValueAtTime(45, t + 0.08);
+                gain.gain.setValueAtTime(0.05, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                osc.start(t); osc.stop(t + 0.1);
+            }
+        }
+
+        document.getElementById('audio-toggle').addEventListener('click', (e) => {
+            e.stopPropagation();
+            audioEnabled = !audioEnabled;
+            e.target.textContent = audioEnabled ? '🔊 Audio: ON' : '🔇 Audio: OFF';
+            if (audioEnabled) initAudio();
+        });
+
+        // ==========================================
+        //  SCENE, CAMERA, & LIGHTING
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x06111a);
+        scene.fog = new THREE.FogExp2(0x06111a, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 150);
+        camera.position.set(0, 1.8, 5.0); // Eye height
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        // General ambient fill
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x182c3c, 1.4));
+
+        // Sunlight
+        const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+        sunLight.position.set(10, 18, 10);
+        scene.add(sunLight);
+
+        // Ceiling Lights
+        function addCeilingLight(x, y, z, color, intensity, distance) {
+            const pl = new THREE.PointLight(color, intensity, distance, 1.3);
+            pl.position.set(x, y, z);
+            scene.add(pl);
+
+            const bulb = new THREE.Mesh(
+                new THREE.BoxGeometry(1.6, 0.08, 1.6),
+                new THREE.MeshBasicMaterial({ color: color })
+            );
+            bulb.position.set(x, y + 0.04, z);
+            scene.add(bulb);
+            return pl;
+        }
+
+        // Room Ceiling Illuminations
+        addCeilingLight(0, 4.4, 0, 0xdcf2ff, 1.8, 22);       // Atrium Center
+        addCeilingLight(0, 4.4, -11, 0x55e5dc, 1.4, 16);     // North Corridor
+        addCeilingLight(0, 4.4, -22, 0x64e8ff, 2.0, 24);     // Genetics Wing Center
+        addCeilingLight(-11, 4.4, 0, 0x76ffd6, 1.4, 16);     // West Corridor
+        addCeilingLight(-22, 4.4, 0, 0x76ffd6, 2.0, 24);     // Microbiology Center
+        addCeilingLight(11, 4.4, 0, 0xffeedb, 1.4, 16);      // East Corridor
+        addCeilingLight(22, 4.4, 0, 0xffd29d, 2.0, 24);      // Equipment Center
+
+        // ==========================================
+        //  MATERIALS & AABBs
+        // ==========================================
+        const mats = {
+            floorMain: new THREE.MeshStandardMaterial({ color: 0xd2e2e8, roughness: 0.35, metalness: 0.1 }),
+            floorGenetics: new THREE.MeshStandardMaterial({ color: 0xbed4e0, roughness: 0.3, metalness: 0.15 }),
+            floorMicro: new THREE.MeshStandardMaterial({ color: 0xbfdcd6, roughness: 0.25, metalness: 0.1 }),
+            floorEquip: new THREE.MeshStandardMaterial({ color: 0xb5c6ce, roughness: 0.4, metalness: 0.2 }),
+            wallMain: new THREE.MeshStandardMaterial({ color: 0xe5f0f3, roughness: 0.7 }),
+            wallGenetics: new THREE.MeshStandardMaterial({ color: 0xd4e9f0, roughness: 0.65 }),
+            wallMicro: new THREE.MeshStandardMaterial({ color: 0xd2ebe5, roughness: 0.6 }),
+            wallEquip: new THREE.MeshStandardMaterial({ color: 0xd0dfe6, roughness: 0.7 }),
+            ceiling: new THREE.MeshStandardMaterial({ color: 0x1d3545, roughness: 0.8 }),
+            benchTop: new THREE.MeshStandardMaterial({ color: 0x3d5866, roughness: 0.25, metalness: 0.2 }),
+            benchLegs: new THREE.MeshStandardMaterial({ color: 0x1d2e38, roughness: 0.6, metalness: 0.5 }),
+            stainless: new THREE.MeshStandardMaterial({ color: 0xe0e8ec, roughness: 0.2, metalness: 0.85 }),
+            darkMetal: new THREE.MeshStandardMaterial({ color: 0x1c2b36, roughness: 0.4, metalness: 0.7 }),
+            glass: new THREE.MeshStandardMaterial({ color: 0xccf0fa, transparent: true, opacity: 0.55, roughness: 0.1 }),
+            doorGlass: new THREE.MeshStandardMaterial({ color: 0x55e5dc, transparent: true, opacity: 0.4, roughness: 0.1 }),
+            acrylic: new THREE.MeshStandardMaterial({ color: 0x1e88e5, transparent: true, opacity: 0.7, roughness: 0.2 }),
+            uvGlow: new THREE.MeshBasicMaterial({ color: 0x4488ff }),
+            dnaBackbone1: new THREE.MeshStandardMaterial({ color: 0xff3b69, roughness: 0.3 }),
+            dnaBackbone2: new THREE.MeshStandardMaterial({ color: 0x00d2ff, roughness: 0.3 }),
+            dnaRung1: new THREE.MeshStandardMaterial({ color: 0xffd152, roughness: 0.4 }),
+            dnaRung2: new THREE.MeshStandardMaterial({ color: 0x00e676, roughness: 0.4 }),
+            screenGlow: new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+        };
+
+        const collisionBoxes = [];
+
+        function registerObstacle(minX, maxX, minZ, maxZ) {
+            collisionBoxes.push({
+                minX: Math.min(minX, maxX),
+                maxX: Math.max(minX, maxX),
+                minZ: Math.min(minZ, maxZ),
+                maxZ: Math.max(minZ, maxZ)
+            });
+        }
+
+        function makeBox(name, x, y, z, w, h, d, material, description, isCollidable = true) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+            mesh.position.set(x, y, z);
+            if (name || description) mesh.userData = { name, description };
+            scene.add(mesh);
+
+            if (isCollidable) {
+                registerObstacle(x - w / 2, x + w / 2, z - d / 2, z + d / 2);
+            }
+            return mesh;
+        }
+
+        // ==========================================
+        //  ARCHITECTURAL ROOMS & WIDE CORRIDORS
+        // ==========================================
+        const wallH = 4.8;
+        const wallThick = 0.4;
+        const doorWidth = 5.6; // Extra wide walkable doorways
+
+        // 1. FLOORS
+        makeBox('', 0, -0.1, 0, 18, 0.2, 18, mats.floorMain, '', false);          // Central Atrium
+        makeBox('', 0, -0.1, -22, 18, 0.2, 18, mats.floorGenetics, '', false);    // Genetics Room
+        makeBox('', 0, -0.1, -11, doorWidth, 0.2, 4, mats.floorGenetics, '', false); // North Corridor
+        makeBox('', -22, -0.1, 0, 18, 0.2, 18, mats.floorMicro, '', false);       // Microbiology Room
+        makeBox('', -11, -0.1, 0, 4, 0.2, doorWidth, mats.floorMicro, '', false);  // West Corridor
+        makeBox('', 22, -0.1, 0, 18, 0.2, 18, mats.floorEquip, '', false);        // Equipment Room
+        makeBox('', 11, -0.1, 0, 4, 0.2, doorWidth, mats.floorEquip, '', false);   // East Corridor
+
+        // Glowing Floor Wayfinding Runners
+        function makeFloorStrip(x, z, w, d, color) {
+            const strip = new THREE.Mesh(
+                new THREE.PlaneGeometry(w, d),
+                new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide })
+            );
+            strip.rotation.x = -Math.PI / 2;
+            strip.position.set(x, 0.015, z);
+            scene.add(strip);
+        }
+        makeFloorStrip(0, -6, 0.8, 6, 0x00d2ff);   // Cyan line towards Genetics
+        makeFloorStrip(-6, 0, 6, 0.8, 0x00e676);   // Green line towards Microbiology
+        makeFloorStrip(6, 0, 6, 0.8, 0xffa726);    // Orange line towards Equipment
+
+        // 2. CEILINGS
+        makeBox('', 0, wallH + 0.1, 0, 18, 0.2, 18, mats.ceiling, '', false);
+        makeBox('', 0, wallH + 0.1, -22, 18, 0.2, 18, mats.ceiling, '', false);
+        makeBox('', 0, wallH + 0.1, -11, doorWidth, 0.2, 4, mats.ceiling, '', false);
+        makeBox('', -22, wallH + 0.1, 0, 18, 0.2, 18, mats.ceiling, '', false);
+        makeBox('', -11, wallH + 0.1, 0, 4, 0.2, doorWidth, mats.ceiling, '', false);
+        makeBox('', 22, wallH + 0.1, 0, 18, 0.2, 18, mats.ceiling, '', false);
+        makeBox('', 11, wallH + 0.1, 0, 4, 0.2, doorWidth, mats.ceiling, '', false);
+
+        // 3. WALLS & ARCHWAYS
+        function makeDoorSign(text, x, y, z, rotY = 0) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0a2333'; ctx.fillRect(0, 0, 512, 128);
+            ctx.strokeStyle = '#55e5dc'; ctx.lineWidth = 8; ctx.strokeRect(4, 4, 504, 120);
+            ctx.fillStyle = '#55e5dc'; ctx.font = 'bold 36px Arial';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.75, 0.08), new THREE.MeshStandardMaterial({ map: texture }));
+            sign.position.set(x, y, z); sign.rotation.y = rotY;
+            scene.add(sign);
+        }
+
+        // --- CENTRAL ATRIUM WALLS ---
+        makeBox('South Wall', 0, wallH/2, 9, 18, wallH, wallThick, mats.wallMain);
+        // North Wall with Wide Opening
+        makeBox('Wall', -6.1, wallH/2, -9, 5.8, wallH, wallThick, mats.wallMain);
+        makeBox('Wall', 6.1, wallH/2, -9, 5.8, wallH, wallThick, mats.wallMain);
+        makeBox('Arch', 0, wallH - 0.45, -9, doorWidth, 0.9, wallThick, mats.wallMain, '', false);
+        makeDoorSign('GENETICS RESEARCH', 0, 3.8, -8.85, 0);
+
+        // West Wall with Wide Opening
+        makeBox('Wall', -9, wallH/2, -6.1, wallThick, wallH, 5.8, mats.wallMain);
+        makeBox('Wall', -9, wallH/2, 6.1, wallThick, wallH, 5.8, mats.wallMain);
+        makeBox('Arch', -9, wallH - 0.45, 0, wallThick, 0.9, doorWidth, mats.wallMain, '', false);
+        makeDoorSign('MICROBIOLOGY LAB', -8.85, 3.8, 0, Math.PI / 2);
+
+        // East Wall with Wide Opening
+        makeBox('Wall', 9, wallH/2, -6.1, wallThick, wallH, 5.8, mats.wallMain);
+        makeBox('Wall', 9, wallH/2, 6.1, wallThick, wallH, 5.8, mats.wallMain);
+        makeBox('Arch', 9, wallH - 0.45, 0, wallThick, 0.9, doorWidth, mats.wallMain, '', false);
+        makeDoorSign('EQUIPMENT SUITE', 8.85, 3.8, 0, -Math.PI / 2);
+
+        // --- NORTH CORRIDOR & GENETICS WING ---
+        makeBox('Wall', -doorWidth/2, wallH/2, -11, wallThick, wallH, 4, mats.wallGenetics);
+        makeBox('Wall', doorWidth/2, wallH/2, -11, wallThick, wallH, 4, mats.wallGenetics);
+
+        makeBox('Wall', 0, wallH/2, -31, 18, wallH, wallThick, mats.wallGenetics); // Far North
+        makeBox('Wall', -9, wallH/2, -22, wallThick, wallH, 18, mats.wallGenetics); // West
+        makeBox('Wall', 9, wallH/2, -22, wallThick, wallH, 18, mats.wallGenetics);  // East
+        makeBox('Wall', -6.1, wallH/2, -13, 5.8, wallH, wallThick, mats.wallGenetics);
+        makeBox('Wall', 6.1, wallH/2, -13, 5.8, wallH, wallThick, mats.wallGenetics);
+
+        // --- WEST CORRIDOR & MICROBIOLOGY WING ---
+        makeBox('Wall', -11, wallH/2, -doorWidth/2, 4, wallH, wallThick, mats.wallMicro);
+        makeBox('Wall', -11, wallH/2, doorWidth/2, 4, wallH, wallThick, mats.wallMicro);
+
+        makeBox('Wall', -31, wallH/2, 0, wallThick, wallH, 18, mats.wallMicro); // Far West
+        makeBox('Wall', -22, wallH/2, -9, 18, wallH, wallThick, mats.wallMicro); // North
+        makeBox('Wall', -22, wallH/2, 9, 18, wallH, wallThick, mats.wallMicro);  // South
+        makeBox('Wall', -13, wallH/2, -6.1, wallThick, wallH, 5.8, mats.wallMicro);
+        makeBox('Wall', -13, wallH/2, 6.1, wallThick, wallH, 5.8, mats.wallMicro);
+
+        // --- EAST CORRIDOR & EQUIPMENT WING ---
+        makeBox('Wall', 11, wallH/2, -doorWidth/2, 4, wallH, wallThick, mats.wallEquip);
+        makeBox('Wall', 11, wallH/2, doorWidth/2, 4, wallH, wallThick, mats.wallEquip);
+
+        makeBox('Wall', 31, wallH/2, 0, wallThick, wallH, 18, mats.wallEquip); // Far East
+        makeBox('Wall', 22, wallH/2, -9, 18, wallH, wallThick, mats.wallEquip); // North
+        makeBox('Wall', 22, wallH/2, 9, 18, wallH, wallThick, mats.wallEquip);  // South
+        makeBox('Wall', 13, wallH/2, -6.1, wallThick, wallH, 5.8, mats.wallEquip);
+        makeBox('Wall', 13, wallH/2, 6.1, wallThick, wallH, 5.8, mats.wallEquip);
+
+        // 4. AUTOMATIC SLIDING GLASS DOORS (Open smoothly as player approaches!)
+        const slidingDoors = [];
+        function makeSlidingDoorPair(x, z, isNorthSouth = true) {
+            const doorGroup = { x, z, isOpen: false, leftMesh: null, rightMesh: null, isNorthSouth };
+            const dW = 2.7, dH = 3.6, dT = 0.08;
+
+            if (isNorthSouth) {
+                const left = new THREE.Mesh(new THREE.BoxGeometry(dW, dH, dT), mats.doorGlass);
+                left.position.set(x - dW/2, dH/2, z);
+                scene.add(left);
+                const right = new THREE.Mesh(new THREE.BoxGeometry(dW, dH, dT), mats.doorGlass);
+                right.position.set(x + dW/2, dH/2, z);
+                scene.add(right);
+                doorGroup.leftMesh = left;
+                doorGroup.rightMesh = right;
+                doorGroup.baseLeftX = x - dW/2;
+                doorGroup.baseRightX = x + dW/2;
+            } else {
+                const left = new THREE.Mesh(new THREE.BoxGeometry(dT, dH, dW), mats.doorGlass);
+                left.position.set(x, dH/2, z - dW/2);
+                scene.add(left);
+                const right = new THREE.Mesh(new THREE.BoxGeometry(dT, dH, dW), mats.doorGlass);
+                right.position.set(x, dH/2, z + dW/2);
+                scene.add(right);
+                doorGroup.leftMesh = left;
+                doorGroup.rightMesh = right;
+                doorGroup.baseLeftZ = z - dW/2;
+                doorGroup.baseRightZ = z + dW/2;
+            }
+            slidingDoors.push(doorGroup);
+        }
+
+        makeSlidingDoorPair(0, -9, true);    // North Entrance Door
+        makeSlidingDoorPair(-9, 0, false);   // West Entrance Door
+        makeSlidingDoorPair(9, 0, false);    // East Entrance Door
+
+        // ==========================================
+        //  FURNITURE & BENCHES
+        // ==========================================
+        function makeLabBench(name, x, z, w, d, desc = 'A heavy-duty chemical-resistant lab work surface.') {
+            const h = 1.0;
+            const top = makeBox(name, x, h, z, w, 0.15, d, mats.benchTop, desc, true);
+            const legW = 0.16;
+            const legH = h - 0.075;
+            const legX = w/2 - 0.2;
+            const legZ = d/2 - 0.2;
+            makeBox('', x - legX, legH/2, z - legZ, legW, legH, legW, mats.benchLegs, '', false);
+            makeBox('', x + legX, legH/2, z - legZ, legW, legH, legW, mats.benchLegs, '', false);
+            makeBox('', x - legX, legH/2, z + legZ, legW, legH, legW, mats.benchLegs, '', false);
+            makeBox('', x + legX, legH/2, z + legZ, legW, legH, legW, mats.benchLegs, '', false);
+            return top;
+        }
+
+        // Atrium Workstations (Shifted slightly to leave central corridors wide open!)
+        makeLabBench('Research bench', -3.2, -4, 4.5, 1.8, 'Main laboratory preparation and sample testing bench.');
+        makeLabBench('Second bench', 3.2, 4, 4.5, 1.8, 'Secondary analysis bench for biological observations.');
+        makeBox('Storage cabinet', 7.2, 1.5, -6, 1.4, 3, 1, mats.wallMain, 'Laboratory storage cabinet containing clean glass supplies.');
+
+        makeBox('Computer screen', -2.2, 1.7, -4, 1.1, 0.8, 0.12, mats.darkMetal, 'Scientists use computers to record and analyse research data.');
+        makeBox('Computer display', -2.2, 1.7, -3.92, 0.9, 0.6, 0.02, mats.screenGlow, 'Digital screen displaying scientific information.');
+
+        // Mounted DNA display panel (Moved to side wall, NOT blocking doorway!)
+        makeBox('DNA display panel', -6.5, 3.2, -8.8, 3.6, 1.8, 0.08, mats.acrylic, 'Electronic panel presenting real-time genomic sequencing reads.', false);
+
+        // Genetics Room Benches
+        makeLabBench('Genetics Workstation', 0, -25, 7, 2.2, 'Genomics bench equipped for PCR amplification and gel electrophoresis.');
+        makeLabBench('Sequencing Station', -6, -22, 2.2, 5, 'Next-generation DNA sequencing and bioinformatics preparation bench.');
+        makeLabBench('Sample Prep Bench', 6, -22, 2.2, 5, 'Enzyme digestion and restriction fragment analysis bench.');
+
+        // Microbiology Room Benches
+        makeLabBench('Sterile Workstation', -22, 4, 7, 2.2, 'Sterile microbiological observation and inoculation station.');
+        makeLabBench('Microscopy Bench', -22, -4, 7, 2.2, 'High-magnification cellular cytology and bacterial staining bench.');
+        makeLabBench('Culture Bench', -27, 0, 2.2, 5, 'Agar dish preparation and streak-plate inoculation table.');
+
+        // Equipment Room Benches
+        makeLabBench('Centrifuge Island', 22, -3, 6, 2.4, 'Reinforced station supporting benchtop microcentrifuges and separation units.');
+        makeLabBench('Sterilization Bench', 22, 4, 6, 2.2, 'Post-autoclave sorting and glassware preparation bench.');
+
+        // ==========================================
+        //  EQUIPMENT BUILDERS
+        // ==========================================
+
+        // 1. MICROSCOPES
+        function createMicroscope(x, y, z, rotY = 0) {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            group.rotation.y = rotY;
+
+            const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.12, 0.6), mats.darkMetal);
+            base.position.y = 0.06; group.add(base);
+
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), mats.darkMetal);
+            arm.position.set(0, 0.45, -0.15); group.add(arm);
+
+            const stage = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.4), mats.stainless);
+            stage.position.set(0, 0.35, 0.05);
+            stage.userData = { name: 'Microscope Stage', description: 'Supports specimen slides directly under objective lenses.' };
+            group.add(stage);
+
+            const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.08, 16), mats.stainless);
+            turret.position.set(0, 0.65, 0.05); group.add(turret);
+
+            const objColors = [0xff3344, 0xffd233, 0x3388ff];
+            for (let i = 0; i < 3; i++) {
+                const angle = (i * Math.PI * 2) / 3;
+                const obj = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.16, 12), new THREE.MeshStandardMaterial({ color: objColors[i], metalness: 0.8 }));
+                obj.position.set(Math.cos(angle) * 0.08, 0.54, 0.05 + Math.sin(angle) * 0.08);
+                group.add(obj);
+            }
+
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.18, 0.25), mats.darkMetal);
+            head.position.set(0, 0.78, 0);
+            head.userData = { name: 'Compound Microscope', description: 'Magnifies cellular structures, bacteria, and tissue slides up to 1000x.' };
+            group.add(head);
+
+            const ocular1 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.25, 12), mats.stainless);
+            ocular1.position.set(-0.08, 0.95, 0.06); ocular1.rotation.x = 0.35; group.add(ocular1);
+            const ocular2 = ocular1.clone(); ocular2.position.x = 0.08; group.add(ocular2);
+
+            scene.add(group);
+        }
+        createMicroscope(-4.2, 1.08, -4, 0);       // Atrium Microscope
+        createMicroscope(-22, 1.08, -4, Math.PI);  // Microbiology Microscope
+        createMicroscope(-23.5, 1.08, -4, Math.PI);
+
+        // 2. CENTRIFUGES
+        // Floor Centrifuge (Equipment Room)
+        function createFloorCentrifuge(x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.25, 1.5), mats.stainless);
+            body.position.y = 0.625;
+            body.userData = { name: 'Floor-Standing Refrigerated Centrifuge', description: 'Spins cell lysates and macromolecules at 20,000 RPM while maintaining -4°C temperature.' };
+            group.add(body);
+            registerObstacle(x - 0.8, x + 0.8, z - 0.75, z + 0.75);
+
+            const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 24), mats.darkMetal);
+            lid.position.set(0, 1.28, -0.1); group.add(lid);
+
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.02), mats.screenGlow);
+            panel.position.set(0, 1.1, 0.76);
+            panel.userData = { name: 'Centrifuge Digital Display', description: 'Indicates real-time parameters: 18,500 RCF • 4.0°C • STATUS: RUNNING.' };
+            group.add(panel);
+            scene.add(group);
+        }
+        createFloorCentrifuge(28, -5);
+
+        // Benchtop Microcentrifuge
+        function createMicrocentrifuge(x, y, z) {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.7), mats.wallMain);
+            chassis.position.y = 0.225;
+            chassis.userData = { name: 'Benchtop Microcentrifuge', description: 'Pellets nucleic acids in 1.5 mL Eppendorf tubes at 14,000 RPM.' };
+            group.add(chassis);
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mats.darkMetal);
+            dome.position.set(0, 0.45, 0); group.add(dome);
+            scene.add(group);
+        }
+        createMicrocentrifuge(21.5, 1.08, -3);
+        createMicrocentrifuge(-4.5, 1.08, -25);
+
+        // 3. PIPETTES ON CAROUSEL
+        function createPipetteStand(x, y, z) {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.05, 20), mats.darkMetal);
+            base.position.y = 0.025; group.add(base);
+
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.65, 16), mats.stainless);
+            pole.position.y = 0.35; group.add(pole);
+
+            const carousel = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.04, 20), mats.acrylic);
+            carousel.position.y = 0.65; group.add(carousel);
+
+            const pipColors = [0x1976d2, 0xfbc02d, 0xd32f2f, 0x757575];
+            const pipNames = ['P1000 Micropipette', 'P200 Micropipette', 'P20 Micropipette', 'P10 Micropipette'];
+            for (let i = 0; i < 4; i++) {
+                const angle = (i * Math.PI) / 2;
+                const pip = new THREE.Group();
+                pip.position.set(Math.cos(angle) * 0.22, 0.35, Math.sin(angle) * 0.22);
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.45, 12), mats.wallMain);
+                body.userData = { name: pipNames[i], description: 'Precision liquid handling tool for dispensing calibrated microliter volumes.' };
+                pip.add(body);
+                const plunger = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 12), new THREE.MeshStandardMaterial({ color: pipColors[i] }));
+                plunger.position.y = 0.24; pip.add(plunger);
+                group.add(pip);
+            }
+            scene.add(group);
+        }
+        createPipetteStand(2.2, 1.08, 4);
+        createPipetteStand(-2, 1.08, -25);
+        createPipetteStand(-20, 1.08, 4);
+
+        // 4. PETRI DISHES WITH CULTURES
+        function createPetriDish(x, y, z, colonyColor = 0xffe066, colonyType = 'Staphylococcus aureus') {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.06, 24), mats.glass);
+            dish.position.y = 0.03;
+            dish.userData = { name: 'Agar Petri Dish', description: 'Culture plate infused with nutrient agar supporting ' + colonyType + '.' };
+            group.add(dish);
+
+            const agar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 24), new THREE.MeshStandardMaterial({ color: 0xcc8833, roughness: 0.1, transparent: true, opacity: 0.85 }));
+            agar.position.y = 0.03; group.add(agar);
+
+            const colMat = new THREE.MeshBasicMaterial({ color: colonyColor });
+            for (let i = 0; i < 7; i++) {
+                const r = 0.08 + Math.random() * 0.15;
+                const theta = Math.random() * Math.PI * 2;
+                const spot = new THREE.Mesh(new THREE.CircleGeometry(0.025 + Math.random() * 0.02, 10), colMat);
+                spot.rotation.x = -Math.PI / 2;
+                spot.position.set(Math.cos(theta) * r, 0.042, Math.sin(theta) * r);
+                group.add(spot);
+            }
+            scene.add(group);
+        }
+        createPetriDish(-24, 1.08, 4, 0xffeb3b, 'S. aureus (Golden Staph)');
+        createPetriDish(-24.8, 1.08, 4.2, 0x00e676, 'P. aeruginosa (Green Pyocyanin)');
+        createPetriDish(-27, 1.08, 1, 0x33b5e5, 'GFP-transformed E. coli');
+
+        // 5. ANIMATED 3D DNA HELIX (Genetics Room)
+        const dnaGroup = new THREE.Group();
+        dnaGroup.position.set(0, 2.5, -22);
+        dnaGroup.userData = { name: 'DNA Double Helix Model', description: 'Macromolecular model showing antiparallel complementary base pairing (A-T & G-C).' };
+        const numPairs = 24, helixRadius = 0.9, helixHeight = 3.6;
+        for (let i = 0; i < numPairs; i++) {
+            const frac = i / numPairs;
+            const angle = frac * Math.PI * 4;
+            const y = (frac - 0.5) * helixHeight;
+            const x1 = Math.cos(angle) * helixRadius, z1 = Math.sin(angle) * helixRadius;
+            const node1 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), mats.dnaBackbone1);
+            node1.position.set(x1, y, z1); dnaGroup.add(node1);
+            const node2 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), mats.dnaBackbone2);
+            node2.position.set(-x1, y, -z1); dnaGroup.add(node2);
+            const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, helixRadius * 2, 8), (i % 2 === 0) ? mats.dnaRung1 : mats.dnaRung2);
+            rung.position.set(0, y, 0); rung.rotation.z = Math.PI / 2; rung.rotation.y = -angle;
+            dnaGroup.add(rung);
+        }
+        scene.add(dnaGroup);
+
+        // 6. GEL ELECTROPHORESIS TANK (Genetics Room)
+        function createGelSystem(x, y, z) {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            const table = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.25, 0.8), mats.darkMetal);
+            table.position.y = 0.125;
+            table.userData = { name: 'UV Gel Transilluminator', description: 'Visualizes ethidium-bromide-stained DNA fragments under 302 nm UV light.' };
+            group.add(table);
+            const gel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.04, 0.6), mats.uvGlow);
+            gel.position.set(0, 0.27, 0); group.add(gel);
+            for (let lane = -0.3; lane <= 0.3; lane += 0.15) {
+                for (let b = 0; b < 4; b++) {
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.01, 0.02), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
+                    band.position.set(lane, 0.292, -0.2 + b * 0.12); group.add(band);
+                }
+            }
+            scene.add(group);
+        }
+        createGelSystem(2.5, 1.08, -25);
+
+        // 7. BIOSAFETY CABINET (Microbiology Room)
+        function createBiosafetyHood(x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 1.4), mats.wallMain);
+            frame.position.y = 1.6;
+            frame.userData = { name: 'Class II Biosafety Cabinet (Laminar Flow Hood)', description: 'HEPA-filtered sterile airflow protecting operator and culture plates.' };
+            group.add(frame);
+            registerObstacle(x - 1.5, x + 1.5, z - 0.7, z + 0.7);
+
+            const tray = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.05, 1.1), mats.stainless);
+            tray.position.set(0, 1.0, 0.1); group.add(tray);
+            const glassSash = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.4, 0.05), mats.glass);
+            glassSash.position.set(0, 2.0, 0.6); group.add(glassSash);
+            scene.add(group);
+        }
+        createBiosafetyHood(-22, -8.2);
+
+        // 8. -80°C DEEP FREEZER (Equipment Room)
+        function createDeepFreezer(x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            const freezer = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.2, 1.4), mats.stainless);
+            freezer.position.y = 1.6;
+            freezer.userData = { name: '-80°C Ultra-Low Temperature Freezer', description: 'Long-term cryopreservation for DNA libraries, competent cells, and enzymes.' };
+            group.add(freezer);
+            registerObstacle(x - 0.8, x + 0.8, z - 0.7, z + 0.7);
+
+            const tempGauge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.2, 0.02), new THREE.MeshBasicMaterial({ color: 0x00e5ff }));
+            tempGauge.position.set(0, 2.6, 0.71);
+            tempGauge.userData = { name: 'Freezer Temp Monitor', description: 'Current Temp: -80.4°C • Compressor: NORMAL.' };
+            group.add(tempGauge);
+            scene.add(group);
+        }
+        createDeepFreezer(30, 0);
+
+        // 9. AUTOCLAVE STERILIZER (Equipment Room)
+        function createAutoclave(x, z) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 1.4), mats.stainless);
+            base.position.y = 0.7;
+            base.userData = { name: 'Autoclave Steam Sterilizer', description: 'Steam sterilizer operating at 121°C (15 psi) for biohazard decontamination.' };
+            group.add(base);
+            registerObstacle(x - 0.8, x + 0.8, z - 0.7, z + 0.7);
+
+            const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.04, 12, 24), mats.darkMetal);
+            wheel.position.set(0, 0.85, 0.71); group.add(wheel);
+            scene.add(group);
+        }
+        createAutoclave(22, 8);
+
+        // ==========================================
+        //  TEST TUBE RACKS & PICK-UP SYSTEM
+        // ==========================================
+        let heldTestTube = null;
+        let heldOriginalParent = null;
+        let heldOriginalPos = new THREE.Vector3();
+        let heldOriginalRot = new THREE.Euler();
+
+        const tubeActionBar = document.getElementById('tube-action-bar');
+        const heldTubeNameSpan = document.getElementById('held-tube-name');
+
+        function createTestTubeRack(x, y, z, rackColor = 0x1976d2) {
+            const rackGroup = new THREE.Group();
+            rackGroup.position.set(x, y, z);
+
+            const rackMat = new THREE.MeshStandardMaterial({ color: rackColor, roughness: 0.3 });
+            const plateTop = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.5), rackMat);
+            plateTop.position.y = 0.35; rackGroup.add(plateTop);
+            const plateBottom = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.5), rackMat);
+            plateBottom.position.y = 0.08; rackGroup.add(plateBottom);
+
+            const sampleData = [
+                { name: 'GFP Reporter Extract', color: 0x00ff88, desc: 'Fluorescent green protein solution under UV excitation.' },
+                { name: 'Plasmid DNA pBR322', color: 0x00c8ff, desc: 'Purified supercoiled recombinant plasmid DNA in TE buffer.' },
+                { name: 'Taq Polymerase Buffer', color: 0xff3d71, desc: 'Thermophilic DNA polymerase reaction buffer containing MgCl2.' },
+                { name: 'LB Nutrient Broth', color: 0xffb300, desc: 'Rich liquid culture media for high-density bacterial growth.' },
+                { name: 'Restriction Enzyme EcoRI', color: 0x9c27b0, desc: 'Endonuclease cleaving palindromic GAATTC recognition sequences.' }
+            ];
+
+            for (let i = 0; i < 5; i++) {
+                const tubeGroup = new THREE.Group();
+                tubeGroup.position.set(-0.48 + i * 0.24, 0.38, 0);
+
+                const glassMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.65, 16), mats.glass);
+                glassMesh.position.y = 0.1; tubeGroup.add(glassMesh);
+
+                const liquidMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.058, 0.058, 0.42, 16),
+                    new THREE.MeshStandardMaterial({ color: sampleData[i].color, roughness: 0.1, transparent: true, opacity: 0.88 })
+                );
+                liquidMesh.position.y = -0.01; tubeGroup.add(liquidMesh);
+
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.08, 16), new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.5 }));
+                cap.position.y = 0.44; tubeGroup.add(cap);
+
+                tubeGroup.userData = {
+                    isTestTube: true,
+                    name: sampleData[i].name,
+                    description: sampleData[i].desc,
+                    origRack: rackGroup,
+                    origPos: tubeGroup.position.clone()
+                };
+                rackGroup.add(tubeGroup);
+            }
+            scene.add(rackGroup);
+        }
+
+        createTestTubeRack(-1.8, 1.08, -4, 0x1976d2); // Atrium Rack
+        createTestTubeRack(4.2, 1.08, 4, 0x388e3c);
+        createTestTubeRack(-5.0, 1.08, -22, 0x7b1fa2); // Genetics Room Rack
+        createTestTubeRack(-20, 1.08, -4, 0x0097a7);   // Microbiology Rack
+        createTestTubeRack(23.5, 1.08, 4, 0xf57c00);   // Equipment Rack
+
+        function pickUpTube(tube) {
+            if (heldTestTube) return;
+            heldTestTube = tube;
+            heldOriginalParent = tube.parent;
+            heldOriginalPos.copy(tube.position);
+            heldOriginalRot.copy(tube.rotation);
+
+            tube.position.set(0.32, -0.25, -0.75);
+            tube.rotation.set(0.2, -0.3, 0);
+            camera.add(tube);
+
+            tubeActionBar.style.display = 'flex';
+            heldTubeNameSpan.textContent = tube.userData.name;
+            document.getElementById('details-card').innerHTML =
+                '🧪 <b>Picked up: ' + tube.userData.name + '</b><br>' + tube.userData.description + '<br><i>Aim at any bench in any room and click to place it down. Press R to rotate.</i>';
+            playSound('pickup');
+        }
+
+        function placeHeldTube(targetWorldPos = null) {
+            if (!heldTestTube) return;
+            camera.remove(heldTestTube);
+
+            if (targetWorldPos) {
+                scene.add(heldTestTube);
+                heldTestTube.position.copy(targetWorldPos);
+                heldTestTube.position.y += 0.22;
+                heldTestTube.rotation.set(0, camera.rotation.y, 0);
+                playSound('place');
+                document.getElementById('details-card').innerHTML = '✅ <b>Placed ' + heldTestTube.userData.name + '</b> safely on the bench surface.';
+            } else {
+                heldOriginalParent.add(heldTestTube);
+                heldTestTube.position.copy(heldOriginalPos);
+                heldTestTube.rotation.copy(heldOriginalRot);
+                playSound('place');
+                document.getElementById('details-card').innerHTML = '↩️ Returned <b>' + heldTestTube.userData.name + '</b> to its rack.';
+            }
+            heldTestTube = null;
+            tubeActionBar.style.display = 'none';
+        }
+
+        function rotateHeldTube() {
+            if (!heldTestTube) return;
+            heldTestTube.rotation.z += 0.35;
+            if (heldTestTube.rotation.z > Math.PI * 0.8) heldTestTube.rotation.z = -0.2;
+            playSound('inspect');
+        }
+
+        // ==========================================
+        //  TELEPORT / FAST TRAVEL (Global Window Scope)
+        // ==========================================
+        window.teleportTo = function(roomKey) {
+            playSound('teleport');
+            if (roomKey === 'atrium') {
+                camera.position.set(0, 1.8, 4.5);
+                yaw = 0; pitch = 0;
+            } else if (roomKey === 'genetics') {
+                camera.position.set(0, 1.8, -20);
+                yaw = 0; pitch = 0;
+            } else if (roomKey === 'microbio') {
+                camera.position.set(-20, 1.8, 0);
+                yaw = Math.PI / 2; pitch = 0;
+            } else if (roomKey === 'equip') {
+                camera.position.set(20, 1.8, 0);
+                yaw = -Math.PI / 2; pitch = 0;
+            }
+            camera.rotation.set(pitch, yaw, 0, 'YXZ');
+        };
+
+        // ==========================================
+        //  FIRST-PERSON WASD & MOUSE LOOK
+        // ==========================================
+        let yaw = 0, pitch = 0;
+        let isPointerLocked = false;
+        let isDragging = false, lastMouseX = 0, lastMouseY = 0;
+        const mousePrompt = document.getElementById('mouse-prompt');
+        const crosshair = document.getElementById('crosshair');
+
+        renderer.domElement.addEventListener('click', () => {
+            if (!isPointerLocked) renderer.domElement.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = (document.pointerLockElement === renderer.domElement);
+            if (isPointerLocked) {
+                mousePrompt.textContent = 'Mouse-look Active • Press ESC to unlock cursor';
+                mousePrompt.style.opacity = '0.5';
+            } else {
+                mousePrompt.textContent = 'Click screen to lock mouse-look • Walk through open doors or use buttons • ESC to unlock';
+                mousePrompt.style.opacity = '1';
+            }
+        });
+
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            if (!isPointerLocked) {
+                isDragging = true;
+                lastMouseX = e.clientX; lastMouseY = e.clientY;
+            }
+        });
+        window.addEventListener('pointerup', () => isDragging = false);
+
+        window.addEventListener('pointermove', (e) => {
+            if (isPointerLocked) {
+                yaw -= e.movementX * 0.0022;
+                pitch -= e.movementY * 0.0022;
+            } else if (isDragging) {
+                yaw -= (e.clientX - lastMouseX) * 0.0035;
+                pitch -= (e.clientY - lastMouseY) * 0.0035;
+                lastMouseX = e.clientX; lastMouseY = e.clientY;
+            } else {
+                return;
+            }
+            pitch = THREE.MathUtils.clamp(pitch, -Math.PI / 2.2, Math.PI / 2.2);
+            camera.rotation.set(pitch, yaw, 0, 'YXZ');
+        });
+
+        const keys = { forward: false, backward: false, left: false, right: false };
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.forward = true;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.backward = true;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+            if (e.code === 'KeyR') rotateHeldTube();
+            if (e.code === 'KeyQ') placeHeldTube(null);
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.forward = false;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.backward = false;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+        });
+
+        function setupBtn(id, keyName) {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); keys[keyName] = true; btn.classList.add('active'); };
+            const stop = (e) => { e.preventDefault(); keys[keyName] = false; btn.classList.remove('active'); };
+            btn.addEventListener('pointerdown', start); btn.addEventListener('pointerup', stop);
+            btn.addEventListener('pointercancel', stop); btn.addEventListener('pointerleave', stop);
+        }
+        setupBtn('btn-w', 'forward'); setupBtn('btn-s', 'backward');
+        setupBtn('btn-a', 'left'); setupBtn('btn-d', 'right');
+
+        document.getElementById('btn-rotate').addEventListener('click', (e) => { e.stopPropagation(); rotateHeldTube(); });
+        document.getElementById('btn-action').addEventListener('click', (e) => { e.stopPropagation(); if (heldTestTube) placeHeldTube(null); });
+
+        // ==========================================
+        //  COLLISION DETECTION
+        // ==========================================
+        function canMoveTo(x, z) {
+            const r = 0.45;
+            for (let i = 0; i < collisionBoxes.length; i++) {
+                const b = collisionBoxes[i];
+                if (x + r > b.minX && x - r < b.maxX && z + r > b.minZ && z - r < b.maxZ) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // ==========================================
+        //  RAYCASTING & INTERACTION
+        // ==========================================
+        const raycaster = new THREE.Raycaster();
+        const centerPointer = new THREE.Vector2(0, 0);
+
+        function handleInteraction() {
+            raycaster.setFromCamera(centerPointer, camera);
+            const hits = raycaster.intersectObjects(scene.children, true);
+            const hit = hits.find(h => h.object.type === 'Mesh' && h.distance < 6.5);
+            if (!hit) return;
+
+            let targetTube = null;
+            let cur = hit.object;
+            while (cur && cur !== scene) {
+                if (cur.userData && cur.userData.isTestTube) { targetTube = cur; break; }
+                cur = cur.parent;
+            }
+
+            if (targetTube) {
+                if (heldTestTube === targetTube) rotateHeldTube();
+                else if (!heldTestTube) pickUpTube(targetTube);
+                return;
+            }
+
+            if (heldTestTube) {
+                if (hit.point && hit.point.y > 0.8 && hit.point.y < 1.3) {
+                    placeHeldTube(hit.point);
+                    return;
+                }
+            }
+
+            let inspectedObj = hit.object;
+            while (inspectedObj && inspectedObj !== scene) {
+                if (inspectedObj.userData && inspectedObj.userData.name) {
+                    document.getElementById('details-card').innerHTML =
+                        '🔍 <b>' + inspectedObj.userData.name + '</b><br>' + inspectedObj.userData.description;
+                    playSound('inspect');
+                    crosshair.classList.add('highlight');
+                    setTimeout(() => crosshair.classList.remove('highlight'), 350);
+                    break;
+                }
+                inspectedObj = inspectedObj.parent;
+            }
+        }
+
+        renderer.domElement.addEventListener('click', () => {
+            if (isPointerLocked) handleInteraction();
+        });
+
+        // ==========================================
+        //  ROOM TRACKER & MINIMAP RADAR
+        // ==========================================
+        const currentRoomText = document.getElementById('current-room-text');
+        let currentRoomName = '';
+        const mapCanvas = document.getElementById('minimap-canvas');
+        const mapCtx = mapCanvas.getContext('2d');
+
+        function updateRoomTracker() {
+            const px = camera.position.x;
+            const pz = camera.position.z;
+            let name = 'Central Research Atrium';
+
+            if (pz < -12.5) name = 'Genetics Research Wing';
+            else if (px < -12.5) name = 'Microbiology Cleanroom';
+            else if (px > 12.5) name = 'Equipment & Storage Suite';
+            else if (pz < -8.5) name = 'North Access Corridor';
+            else if (px < -8.5) name = 'West Sterile Corridor';
+            else if (px > 8.5) name = 'East Utility Corridor';
+
+            if (name !== currentRoomName) {
+                currentRoomName = name;
+                currentRoomText.textContent = name;
+            }
+        }
+
+        function drawMiniMap() {
+            mapCtx.clearRect(0, 0, 160, 160);
+
+            // Scale & Center: X: [-31, 31], Z: [-31, 9] -> World center: (0, -11)
+            const mapScale = 2.0; // pixels per world unit
+            const originX = 80;
+            const originZ = 100;
+
+            function toMapX(wx) { return originX + wx * mapScale; }
+            function toMapZ(wz) { return originZ + wz * mapScale; }
+
+            // 1. Draw Corridors
+            mapCtx.fillStyle = '#0f293a';
+            // North Corridor
+            mapCtx.fillRect(toMapX(-2.8), toMapZ(-13), 5.6 * mapScale, 4 * mapScale);
+            // West Corridor
+            mapCtx.fillRect(toMapX(-13), toMapZ(-2.8), 4 * mapScale, 5.6 * mapScale);
+            // East Corridor
+            mapCtx.fillRect(toMapX(9), toMapZ(-2.8), 4 * mapScale, 5.6 * mapScale);
+
+            // 2. Draw 4 Rooms with Colored Borders
+            function drawRoom(rx, rz, rw, rd, label, color) {
+                const mx = toMapX(rx - rw/2);
+                const mz = toMapZ(rz - rd/2);
+                mapCtx.fillStyle = '#081a26';
+                mapCtx.fillRect(mx, mz, rw * mapScale, rd * mapScale);
+                mapCtx.strokeStyle = color;
+                mapCtx.lineWidth = 1.5;
+                mapCtx.strokeRect(mx, mz, rw * mapScale, rd * mapScale);
+
+                mapCtx.fillStyle = color;
+                mapCtx.font = 'bold 8.5px Arial';
+                mapCtx.textAlign = 'center';
+                mapCtx.textBaseline = 'middle';
+                mapCtx.fillText(label, mx + (rw * mapScale)/2, mz + (rd * mapScale)/2);
+            }
+
+            drawRoom(0, 0, 18, 18, 'ATRIUM', '#55e5dc');
+            drawRoom(0, -22, 18, 18, 'GENETICS', '#00d2ff');
+            drawRoom(-22, 0, 18, 18, 'MICROBIO', '#00e676');
+            drawRoom(22, 0, 18, 18, 'EQUIPMENT', '#ffa726');
+
+            // 3. Draw Player Position & Sight Cone
+            const playerX = toMapX(camera.position.x);
+            const playerZ = toMapZ(camera.position.z);
+
+            // Sight cone
+            mapCtx.fillStyle = 'rgba(85, 229, 220, 0.3)';
+            mapCtx.beginPath();
+            mapCtx.moveTo(playerX, playerZ);
+            const fwdAngle = yaw + Math.PI / 2;
+            mapCtx.arc(playerX, playerZ, 12, fwdAngle - 0.45, fwdAngle + 0.45);
+            mapCtx.closePath();
+            mapCtx.fill();
+
+            // Player Blinking Dot
+            mapCtx.fillStyle = '#ff1744';
+            mapCtx.beginPath();
+            mapCtx.arc(playerX, playerZ, 3.2, 0, Math.PI * 2);
+            mapCtx.fill();
+        }
+
+        // ==========================================
+        //  MAIN LOOP
+        // ==========================================
+        let prevTime = performance.now();
+        let stepSoundTimer = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+            const delta = Math.min((time - prevTime) / 1000, 0.1);
+            prevTime = time;
+
+            // DNA Rotation
+            if (dnaGroup) dnaGroup.rotation.y += delta * 0.45;
+
+            // Update Automatic Sliding Doors
+            for (let i = 0; i < slidingDoors.length; i++) {
+                const d = slidingDoors[i];
+                const dist = Math.hypot(camera.position.x - d.x, camera.position.z - d.z);
+                const shouldOpen = (dist < 5.0);
+
+                if (d.isNorthSouth) {
+                    const targetLeft = shouldOpen ? d.baseLeftX - 2.2 : d.baseLeftX;
+                    const targetRight = shouldOpen ? d.baseRightX + 2.2 : d.baseRightX;
+                    d.leftMesh.position.x += (targetLeft - d.leftMesh.position.x) * delta * 5.0;
+                    d.rightMesh.position.x += (targetRight - d.rightMesh.position.x) * delta * 5.0;
+                } else {
+                    const targetLeft = shouldOpen ? d.baseLeftZ - 2.2 : d.baseLeftZ;
+                    const targetRight = shouldOpen ? d.baseRightZ + 2.2 : d.baseRightZ;
+                    d.leftMesh.position.z += (targetLeft - d.leftMesh.position.z) * delta * 5.0;
+                    d.rightMesh.position.z += (targetRight - d.rightMesh.position.z) * delta * 5.0;
+                }
+            }
+
+            // WASD Walking
+            const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+            const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+            const moveDir = new THREE.Vector3();
+            if (keys.forward) moveDir.add(forward);
+            if (keys.backward) moveDir.sub(forward);
+            if (keys.left) moveDir.sub(right);
+            if (keys.right) moveDir.add(right);
+
+            if (moveDir.lengthSq() > 0) {
+                moveDir.normalize();
+                const speed = 5.2;
+                const stepX = moveDir.x * speed * delta;
+                const stepZ = moveDir.z * speed * delta;
+
+                const nextX = camera.position.x + stepX;
+                const nextZ = camera.position.z + stepZ;
+
+                if (canMoveTo(nextX, camera.position.z)) camera.position.x = nextX;
+                if (canMoveTo(camera.position.x, nextZ)) camera.position.z = nextZ;
+
+                stepSoundTimer += delta;
+                if (stepSoundTimer > 0.40) {
+                    playSound('step');
+                    stepSoundTimer = 0;
+                }
+            }
+
+            camera.position.y = 1.8;
+            updateRoomTracker();
+            drawMiniMap();
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    </script>
+</body>
+
+</html>
